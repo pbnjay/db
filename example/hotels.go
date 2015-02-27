@@ -18,6 +18,7 @@ func init() {
         number integer,
         hotel int references hotels(id)
      );`,
+		`ALTER TABLE hotels ADD COLUMN address varchar;`,
 	}
 }
 
@@ -27,23 +28,26 @@ func main() {
 
 	args := flag.Args()
 	if len(args) == 0 {
-		fmt.Println("USAGE: ./hotels 'Hotel Name' 101 102 103 ...")
+		fmt.Println("USAGE: ./hotels 'Hotel Name' 'Hotel Address' 101 102 103 ...")
 		return
 	}
 
 	var hotelID int
 	err := db.DB.QueryRow(`SELECT id FROM hotels WHERE name=$1`, args[0]).Scan(&hotelID)
+	if err == nil {
+		db.DB.Exec("UPDATE hotels SET address=$2 WHERE id=$1", hotelID, args[1])
+	}
 	if err == db.ErrNotFound {
 		fmt.Printf("'%s' doesn't exist, creating...\n", args[0])
-		err = db.DB.QueryRow(`INSERT INTO hotels (name) VALUES ($1) RETURNING id`,
-			args[0]).Scan(&hotelID)
+		err = db.DB.QueryRow(`INSERT INTO hotels (name,address) VALUES ($1,$2) RETURNING id`,
+			args[0], args[1]).Scan(&hotelID)
 	}
 	if err != nil {
 		fmt.Println("error creating hotel: ", err)
 		return
 	}
 
-	for _, roomNum := range args[1:] {
+	for _, roomNum := range args[2:] {
 		// no error checking for brevity of example
 		db.DB.Exec(`INSERT INTO rooms (number, hotel) VALUES ($1,$2)`, roomNum, hotelID)
 	}
