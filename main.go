@@ -112,7 +112,7 @@ func Init(connStrs ...string) error {
 		if i == 0 {
 			log.Println("Creating database")
 		} else {
-			log.Println("Performing database migration from %d -> %d")
+			log.Printf("Performing database migration from %d -> %d\n", i, len(dbSchema))
 		}
 	}
 	for ; i < len(dbSchema); i++ {
